@@ -157,7 +157,6 @@ public class Main {
                     sleep(500);
                 }
             } catch (XmppException e) {
-                e.printStackTrace();
                 System.err.println(e.getMessage());
             }
             sleep(5000);

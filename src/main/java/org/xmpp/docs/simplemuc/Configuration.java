@@ -2,8 +2,8 @@ package org.xmpp.docs.simplemuc;
 
 public class Configuration {
 
-    private static final String COMPONENT_NAME = "muc.gpn.siacs.eu";
-    private static final String SHARED_SECRET = "eiyiedieth6Ahdae7oci";
+    private static final String COMPONENT_NAME = "mymuc.domain.tld";
+    private static final String SHARED_SECRET = "mysecret";
     private static final String HOSTNAME = "localhost";
     private static final int PORT = 5347;
 

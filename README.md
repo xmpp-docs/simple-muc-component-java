@@ -1,5 +1,5 @@
 ---
-title: Developing A Simple Multi-User Chat Component with Java
+title: Developing A Simple Multi-User Chat Component with Java 8
 author: Daniel Gultsch
 ---
 # Introduction
@@ -56,7 +56,32 @@ The Ejabberd documentation for external components is available [here](https://d
 
 # Getting Started
 
+You can find the [full source code on Github](https://github.com/xmpp-docs/simple-muc-component-java). If you just want working code you can do the following:
+
+* Edit `Configuration.java`
+* use `mvn package` to build the project
+* run `java -jar target/simple-muc-component-java-0.1.jar`
+
 ## Build enviroment and dependencies
+
+We are going to use the Java XMPP library [Babbler](https://xmpp.rocks) for our project. It uses modern language features and the XML (de)serializer JAXB which makes it very easy to write custom extensions. However a lot of what you learn in this tutorial can also be used to write components with other XMPP libraries.
+
+Add the following dependencies to your maven build file.
+
+```xml
+<dependencies>
+    <dependency>
+        <groupId>rocks.xmpp</groupId>
+        <artifactId>xmpp-core-client</artifactId>
+        <version>0.8.1</version>
+    </dependency>
+    <dependency>
+        <groupId>rocks.xmpp</groupId>
+        <artifactId>xmpp-extensions-client</artifactId>
+        <version>0.8.1</version>
+    </dependency>
+</dependencies>
+```
 
 ## Creating the component
 
@@ -156,7 +181,7 @@ The presence must have a special `x` element as child to indicate that this is a
 </presence>
 <presence from="room-one@mymuc.domain.tld/reassigned-nick" to="user@domain.tld/pc">
   <x xmlns="http://jabber.org/protocol/muc#user">
-    <item affiliation="member" role="participant"/>
+    <item affiliation="none" role="participant"/>
     <status code="110"/>
   </x>
 </presence>
@@ -166,3 +191,4 @@ Presences from the room to the client are garnished with an `x` element. This is
 *Sidenote: Some older clients might not look at the status and just attempt to recognize their own presence by looking at resource part and wait that one matches the nick they used on join. However this is a bug in the client and should be reported when encountered.*
 
 ## Start coding
+
