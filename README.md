@@ -157,6 +157,8 @@ The protocol for joining a MUC consists of the client sending a presence stanza 
 1. It indicates to the client that all other participants’ presences have been sent.
 2. In case of nick name reassignment it informs the client of the new nick.
 
+After a successful join the room will also send presence to other participants in the room to inform them of the new participant.
+
 #### Presence from client to room
 
 ```xml
@@ -190,5 +192,87 @@ Presences from the room to the client are garnished with an `x` element. This is
 
 *Sidenote: Some older clients might not look at the status and just attempt to recognize their own presence by looking at resource part and wait that one matches the nick they used on join. However this is a bug in the client and should be reported when encountered.*
 
+#### Presences from room to other participants
+
+```xml
+<presence from="room-one@mymuc.domain.tld/reassigned-nick" to="user-a@domain.tld/pc">
+  <x xmlns="http://jabber.org/protocol/muc#user">
+    <item affiliation="none" role="participant"/>
+  </x>
+</presence>
+<presence from="room-one@mymuc.domain.tld/reassigned-nick" to="user-b@domain.tld/pc">
+  <x xmlns="http://jabber.org/protocol/muc#user">
+    <item affiliation="none" role="participant"/>
+  </x>
+</presence
+```
+
 ## Start coding
 
+Putting together what we’ve just learned we need a couple of things:
+
+* A `RoomState` class that holds information about a room including its current list of participants
+* A `HashMap<String, RoomState>` that maps room names to RoomStates. A new RoomState instance will be created automatically as soon as someone tries to join a particular room. (Name in this context means localpart of the Jabber ID)
+* A `Participant` class that holds a list of all connected resources (clients).
+
+### Participant
+
+### RoomState
+
+The RoomState class will not only store a list of participants but also handle join and leave events.
+
+A basic outline for the class will look like this:
+
+```java
+public class RoomState {
+
+    private final Collection<Participant> participants = new ArrayList<>();
+
+}
+```
+
+#### join
+
+The `join` method takes two paramaters. The full JID of the client attempting to join (the from attribute of the presence) and the desired nick name (the resource part of the to attribute).
+
+Three cases need to be accounted for:
+
+1. Another resource of the same user is already in the room. In that case we ignored the the desired nick and return the nick in use
+2. The user is currently not joined
+   1. The desired nick is already in use
+   2. The desired nick is still available
+
+```java
+public synchronized String join(Jid client, String desiredNick) throws NickAlreadyInUseException {
+    final Participant participant = Participant.find(participants, client);
+    if (participant != null) {
+        participant.add(client);
+        return participant.getNick();
+    } else {
+        if (Participant.isNickInUse(participants, desiredNick)) {
+            throw new NickAlreadyInUseException();
+        } else {
+            this.participants.add(new Participant(client, desiredNick));
+            return desiredNick;
+        }
+    }
+}
+
+public static class NickAlreadyInUseException extends Exception {
+}
+```
+
+#### leave
+
+```java
+public synchronized boolean leave(Jid client, String nick) {
+    final Participant participant = Participant.find(participants, client);
+    if (participant != null) {
+        if (participant.getNick().equals(nick) && participant.remove(client)) {
+            this.participants.remove(participant);
+            return true;
+        }
+    }
+    return false;
+}
+```

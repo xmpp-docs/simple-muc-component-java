@@ -9,31 +9,27 @@ public class RoomState {
 
     private final Collection<Participant> participants = new ArrayList<>();
 
-    public String join(Jid client, String desiredNick) throws NickAlreadyInUseException {
-        synchronized (participants) {
-            final Participant participant = Participant.find(participants, client);
-            if (participant != null) {
-                participant.add(client);
-                return participant.getNick();
+    public synchronized  String join(Jid client, String desiredNick) throws NickAlreadyInUseException {
+        final Participant participant = Participant.find(participants, client);
+        if (participant != null) {
+            participant.add(client);
+            return participant.getNick();
+        } else {
+            if (Participant.isNickInUse(participants, desiredNick)) {
+                throw new NickAlreadyInUseException();
             } else {
-                if (Participant.isNickInUse(participants, desiredNick)) {
-                    throw new NickAlreadyInUseException();
-                } else {
-                    this.participants.add(new Participant(client, desiredNick));
-                    return desiredNick;
-                }
+                this.participants.add(new Participant(client, desiredNick));
+                return desiredNick;
             }
         }
     }
 
-    public boolean leave(Jid client, String nick) {
-        synchronized (participants) {
-            final Participant participant = Participant.find(participants, client);
-            if (participant != null) {
-                if (participant.getNick().equals(nick) && participant.remove(client)) {
-                    this.participants.remove(participant);
-                    return true;
-                }
+    public synchronized boolean leave(Jid client, String nick) {
+        final Participant participant = Participant.find(participants, client);
+        if (participant != null) {
+            if (participant.getNick().equals(nick) && participant.remove(client)) {
+                this.participants.remove(participant);
+                return true;
             }
         }
         return false;
