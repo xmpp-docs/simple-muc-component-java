@@ -127,4 +127,42 @@ A MUC service has the ability to assign a different nick name on join (Instead o
 
 ### Joining
 
-The protocol for joining a MUC consists of the client sending a presence stanza to the MUC. The to-attribute of that presence contains the Jabber ID of the room (room-one@mymuc.domain.tld) as well as the desired nick as resource. (room-one@mymuc.domain.tld/desired-nick). In response the room will send presences back for each participant in the room. The presence will originate from full JIDs that have the participant’s nicks as resource. The last 
+The protocol for joining a MUC consists of the client sending a presence stanza to the MUC. The to-attribute of that presence contains the Jabber ID of the room (`room-one@mymuc.domain.tld`) as well as the desired nick as resource. (`room-one@mymuc.domain.tld/desired-nick`). In response the room will send presences back for each participant in the room. The presence will originate from full JIDs that have the participant’s nicks as resource. The last presence send from the room back to the client is a reflection of the presence the client used to join. This serves two purposes:
+
+1. It indicates to the client that all other participants’ presences have been sent.
+2. In case of nick name reassignment it informs the client of the new nick.
+
+#### Presence from client to room
+
+```xml
+<presence from="user@domain.tld/pc" to="room-one@mymuc.domain.tld/desired-nick">
+   <x xmlns="http://jabber.org/protocol/muc"/>
+</presence>
+```
+The presence must have a special `x` element as child to indicate that this is an attempt to join a room.
+
+#### Presences from room to client
+
+```xml
+<presence from="room-one@mymuc.domain.tld/user-a" to="user@domain.tld/pc">
+  <x xmlns="http://jabber.org/protocol/muc#user">
+    <item affiliation="none" role="participant"/>
+  </x>
+</presence>
+<presence from="room-one@mymuc.domain.tld/user-b" to="user@domain.tld/pc">
+  <x xmlns="http://jabber.org/protocol/muc#user">
+    <item affiliation="none" role="participant"/>
+  </x>
+</presence>
+<presence from="room-one@mymuc.domain.tld/reassigned-nick" to="user@domain.tld/pc">
+  <x xmlns="http://jabber.org/protocol/muc#user">
+    <item affiliation="member" role="participant"/>
+    <status code="110"/>
+  </x>
+</presence>
+```
+Presences from the room to the client are garnished with an `x` element. This is used to convey meta information like role and affilation (admin, owner, …). The clients own presences is additionally annotated with a `<status code="110"/>`. This helps the client to understand that this is their own presence and is the mechanism that makes nick reassignment work.
+
+*Sidenote: Some older clients might not look at the status and just attempt to recognize their own presence by looking at resource part and wait that one matches the nick they used on join. However this is a bug in the client and should be reported when encountered.*
+
+## Start coding

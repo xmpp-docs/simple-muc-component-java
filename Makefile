@@ -1,6 +1,4 @@
-all: index.html
-
-index.html:
+docs: index.html
 	pandoc -s --toc README.md --css pandoc.css -o index.html
 
 clean:
